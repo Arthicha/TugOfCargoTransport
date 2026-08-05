@@ -22,18 +22,18 @@ except ImportError:
 # ================================================================================
 # CONSTANTS & CONFIGURATION
 # ================================================================================
-SCHEME = "centralized" # "centralized" vs "decentralized"
+SCHEME = "decentralized" # "centralized" vs "decentralized"
 DIRECTION = 1
-ETA = 0.5
-DATA_COLLECT = 0
+ETA = 3
+DATA_COLLECT = 1
 PLOT = 0
 LOAD = 1
 
-RETRAINING = True
 NAMESPACES = ["rob1", "rob2", "rob3", "rob4"]
-TURNING_GAINS = np.array([1.0, 1.0, 1.0, 1.0])
+TURNING_GAINS = np.array([1.0, 1.0, 1.0, 1.0])*0.2
+TURNING_DGAINS = 0.7
+TEGOTAE_CLIP = 0.2
 TARGET_HZ = 20
-FORCE_WINDOWS = 7
 DT_TARGET = 1.0 / TARGET_HZ
 N_HISTORY = 200
 
@@ -67,11 +67,8 @@ phis = np.zeros(len(NAMESPACES))
 tegotae = np.zeros(len(NAMESPACES))
 tegotae_min = np.zeros(len(NAMESPACES))
 tegotae_max = np.zeros(len(NAMESPACES))
-force = np.zeros(len(NAMESPACES))
-currents = np.zeros((len(NAMESPACES),))
+tegotae_windup = np.zeros(len(NAMESPACES))
 currents_offset = np.zeros(len(NAMESPACES))
-robot_poses = np.zeros((len(NAMESPACES),2))
-goal_pose = np.zeros(len(NAMESPACES))
 yaws = np.zeros((len(NAMESPACES),))
 motors = {}
 robots = {}
@@ -85,7 +82,7 @@ arrayhistory = []
 # FUNCTION: sysCall_init
 # ================================================================================
 def sysCall_init():
-	global phis, FORCE_WINDOWS,  currents_offset
+	global phis,  currents_offset
 	global cargo, goal, rob_dummies, car_dummies
 	global graph_handle, phi_stream_handles  # Add graph variables
 
@@ -125,7 +122,7 @@ def sysCall_init():
 	goal = sim.getObject(f"/goal")
 
 
-	if (not DATA_COLLECT) and (SCHEME == 'decentralized'):
+	if (SCHEME == 'decentralized'):
 		training_data = pd.read_csv(os.path.join(FOLDER_PATH,"checkpoints/"+("blue" if DIRECTION >= 1 else "red")+"win_nofilter.csv")).to_numpy()
 
 
@@ -181,9 +178,9 @@ def sysCall_init():
 # FUNCTION: sysCall_actuation
 # ================================================================================
 def sysCall_actuation():
-	global phis, force, tegotae, arrayhistory, goal, rob_dummies, car_dummies
-	global robot_poses, yaws, currents, corner_poses
-	global tegotae_mean
+	global phis, tegotae, arrayhistory, goal, rob_dummies, car_dummies
+	global yaws
+	global tegotae_windup
 	global graph_handle, phi_stream_handles
 
 	dt = DT_TARGET
@@ -196,6 +193,7 @@ def sysCall_actuation():
 	cargo_orien = sim.getObjectOrientation(cargo, sim.handle_world)
 	currents = get_estForce()
 	robot_poses, yaws = get_robPoses()
+	robot_dyaws = get_robVels()
 	
 	# ----------------------------------------------------------------------------
 	# Step 1: Advance natural phase baseline and compute instantaneous force
@@ -217,13 +215,18 @@ def sysCall_actuation():
 	if SCHEME == 'decentralized':
 		for i, name in enumerate(NAMESPACES):
 			forward_models[i].sigma = 0.8
-			grad_phi = forward_models[i].backward_phi(phis[i], np.clip(currents[i]-currents_offset[i],0,None))
-			forward_models[i].sigma = 0.2
-			grad_phi += forward_models[i].backward_phi(phis[i], np.clip(currents[i]-currents_offset[i],0,None))
+			grad_phi_coarse = forward_models[i].backward_phi(phis[i], np.clip(currents[i]-currents_offset[i],0,None))
+			forward_models[i].sigma = 0.5
+			grad_phi_fine = forward_models[i].backward_phi(phis[i], np.clip(currents[i]-currents_offset[i],0,None))
+			
+			grad_phi = 0.2*grad_phi_coarse + 0.8*grad_phi_fine
 			tegotae[i] = (grad_phi)/(tegotae_max[i] - tegotae_min[i])
 
-		tegotae = np.clip(ETA*5*tegotae,-0.5,0.5)
-
+		
+		raw_drive = ETA * tegotae
+		total_drive = raw_drive + tegotae_windup
+		tegotae = np.clip(total_drive, -TEGOTAE_CLIP, TEGOTAE_CLIP)
+		tegotae_windup += raw_drive - tegotae
 	
 	# ----------------------------------------------------------------------------
 	# Step 3: Update phase angles using Kuramoto feedback
@@ -244,7 +247,10 @@ def sysCall_actuation():
 
 	turning = theta-yaws
 
-	turning = -1.5*TURNING_GAINS * np.sin(turning)
+	turning = -TURNING_GAINS * np.clip(np.sin(turning)*3 ,-1,1)  
+	turning += TURNING_DGAINS*robot_dyaws*((turning+TURNING_DGAINS*robot_dyaws)*turning > 0)
+	print(turning/TURNING_GAINS)
+
 	left_forces = 0.5*force * np.clip(1.0 + force*turning,0,None)
 	right_forces = 0.5*force * np.clip(1.0 - force*turning,0,None)
 
@@ -259,7 +265,7 @@ def sysCall_actuation():
 	if (DATA_COLLECT):
 
 		hist = []
-		for data in [phis,currents]:#[cargo_pose,cargo_orien,phis,currents,robot_poses,yaws,]:
+		for data in [cargo_pose,cargo_orien,phis,currents,robot_poses,yaws]: #[phis,currents]
 			if isinstance(data, np.ndarray):
 				hist += data.flatten().tolist()
 			elif isinstance(data, list):
@@ -269,7 +275,7 @@ def sysCall_actuation():
 
 		if (len(arrayhistory) > (N_HISTORY)): 
 
-			csv_path = os.path.join(FOLDER_PATH, "checkpoints/"+'data.csv')
+			csv_path = os.path.join(FOLDER_PATH, "data/"+'data.csv')
 			with open(csv_path, mode='a', newline='') as csv_file:
 				writer = csv.writer(csv_file)
 				writer.writerows(arrayhistory)
@@ -284,15 +290,6 @@ def drive(name, left_forces, right_forces):
 	global motors
 
 	lmotor, rmotor = motors[name]
-
-	if (left_forces <= 0) and (right_forces <= 0):
-
-		vl = sim.getJointVelocity(lmotor)
-		vr = sim.getJointVelocity(rmotor)
-
-		dv = 0.2*(vl-vr)
-		left_forces -= np.clip(dv,0,None)
-		right_forces -= np.clip(-dv,0,None)
 
 	sim.setJointTargetForce(lmotor, left_forces)
 	sim.setJointTargetForce(rmotor, right_forces)
@@ -325,6 +322,18 @@ def get_robPoses():
 		robot_poses[i] = pos[:-1]
 		yaws[i] = ori[2]
 	return robot_poses, yaws
+
+def get_robVels():
+	global NAMESPACES
+	global robots
+
+	dyaws = np.zeros(len(NAMESPACES))
+	for i, name in enumerate(NAMESPACES):
+
+		linearVelocity, angularVelocity = sim.getObjectVelocity(robots[name])
+
+		dyaws[i] = angularVelocity[2]
+	return dyaws
 
 
 def compute_tangent_points(center: np.ndarray, points: np.ndarray, side_sign: np.ndarray, r = 0.3) -> np.ndarray:

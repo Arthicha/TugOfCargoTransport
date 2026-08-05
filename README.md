@@ -1,8 +1,9 @@
-# Tug of War: Adversarial Robots Lead to Emergence Cooperation
+# Tug of War: 
+# How Adversarial Robots Lead to Emergence Cooperation
 
 Arthicha Srisuchinnawong (zumoarthicha@gmail.com)
 
-![TugOfRobots](cargo_transport.png)
+![TugOfRobots](figures/cargo_transport.png)
 
 Simulating an array of tethered oscillators as a competitive tug of robots.
 
@@ -21,6 +22,14 @@ Simulating an array of tethered oscillators as a competitive tug of robots.
 3. Run (>) in the CoppeliaSim. CoppeliaSim will automatically run simtransport.py for you.
 
 4. Enjoy!
+
+
+## Demo1: Toward a Goal
+
+![TugOfRobots](figures/toward_a_goal/cargo_trajectory.png)
+
+![TugOfRobots](figures/toward_a_goal/selforganization.png)
+
 
 ## Configure the Program
 
