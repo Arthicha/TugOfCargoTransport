@@ -2,7 +2,7 @@
 
 Arthicha Srisuchinnawong (zumoarthicha@gmail.com)
 
-![TugOfRobots](figs/cargo_transport.png)
+![TugOfRobots](cargo_transport.png)
 
 Simulating an array of tethered oscillators as a competitive tug of robots.
 
