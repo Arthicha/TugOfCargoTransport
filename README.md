@@ -23,11 +23,18 @@ Simulating an array of tethered oscillators as a competitive tug of robots.
 
 4. Enjoy!
 
+## Pipeline (AI-summary)
+
+![Pipeline](figures/oversimplified_pipeline.png)
+
+## Code Structure (AI-summary)
+
+![Structure](figures/oversimplified_diagram.png)
+
 
 ## Demo1: Toward a Goal
 
 ![DEMO1](figures/demo1_toward_a_goal.png)
-
 
 
 ## Configure the Program
