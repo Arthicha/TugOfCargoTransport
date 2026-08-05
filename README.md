@@ -26,10 +26,8 @@ Simulating an array of tethered oscillators as a competitive tug of robots.
 
 ## Demo1: Toward a Goal
 
-<p float="center">
-  <img src="figures/toward_a_goal/cargo_trajectory.png" alt="TugOfRobots" width="45%" />
-  <img src="figures/toward_a_goal/selforganization.png" alt="TugOfRobots" width="45%" />
-</p>
+![DEMO1](figures/demo1_toward_a_goal.png)
+
 
 
 ## Configure the Program
