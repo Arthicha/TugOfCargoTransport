@@ -17,7 +17,7 @@
 
 1. Open Coppelia scene `tortel_cargoexp.ttt`
 
-2. In cargo's child scrpt, set EXTERNAL_FILE_PATH to "simtransport.py". For example, "D:\myname\projectname\simtransport.py"
+2. In cargo's child scrpt, set EXTERNAL_FILE_PATH to "simtransport.py" or "multisimtransport.py". For example, "D:\myname\projectname\simtransport.py"
 
 3. Run (>) in the CoppeliaSim. CoppeliaSim will automatically run simtransport.py for you.
 
@@ -27,13 +27,13 @@
 
 ![Pipeline](figures/oversimplified_pipeline.png)
 
-In phase 1 (Data Collection): set SCHEME to "centralized" and DATA_COLLECT to "True". 
+In phase 1 (Data Collection): set SCHEME to "kuramoto" and DATA_COLLECT to "True". 
 
-In phase 2 (Pre-training): set SCHEME to "decentralized", DATA_COLLECT to "False", PLOT to "True", and LOAD to "False". Also, rename the data file to "bluewin_nofilter.csv" (DIRECTION = 1) or "redwin_nofilter.csv" (DIRECTION = -1). Make sure the model fit to the data well, as shown below:
+In phase 2 (Pre-training): set SCHEME to "adversarial cooperation", DATA_COLLECT to "False", PLOT to "True", and LOAD to "False". Also, rename the data file to "bluewin_nofilter.csv" (DIRECTION = 1) or "redwin_nofilter.csv" (DIRECTION = -1). Make sure the model fit to the data well, as shown below:
 
 ![goodfit](figures/rbf_training.png)
 
-In phase 3 (Decentralized Deployment): set SCHEME to "decentralized", DATA_COLLECT to "False", PLOT to "True" or "False", and LOAD to "True" to bypass the training process. Here, you may need to tune the learning/adaptation/coupling rate ETA.
+In phase 3 (Deployment): set SCHEME to "adversarial cooperation", DATA_COLLECT to "False", PLOT to "True" or "False", and LOAD to "True" to bypass the training process. Here, you may need to tune the learning/adaptation/coupling rate ETA.
 
 ## Code Structure (AI-summary)
 
@@ -44,17 +44,43 @@ In phase 3 (Decentralized Deployment): set SCHEME to "decentralized", DATA_COLLE
 
 ![DEMO1](figures/demo1_toward_a_goal.png)
 
+## Demo 3: Candy Experiment (Ant)
+
+![DEMO3](figures/demo3_candy.png)
+
+## Demo 4: Maze Experiment (Ant)
+
+![DEMO4](figures/demo4_maze.png)
+
+## Demo 5: Traffic (Motor Protein)
+
+![DEMO5](figures/demo5_protein.png)
 
 ## Configure the Program
 
 In "simtransport.py", there are 2 configuration argument you can play. 
 
-<item> SCHEME: control scheme, either "centralized" (standart kuramoto coupling enforcing phase offset) vs "decentralized" (implecit coupling via force feedback).
+<item> SCHEME: control scheme, either "kuramoto" (standart kuramoto coupling enforcing phase offset) vs "adversarial cooperation" (implecit coupling via force feedback).
 
 <item> DIRECTION: target moving direction. 1 toward the blue team, -1 toward the red team.
 
-For example, when (SCEME,DIRECTION) = ("centralized",1) the robot collective will moves toward the right (blue team) using explicit kuramoto coupling. When (SCEME,DIRECTION) = ("decentralized",-1), the robot collective will move toward the left (red team) using implecit coupling without any explicit communication between robots.
+For example, when (SCEME,DIRECTION) = ("kuramoto",1) the robot collective will moves toward the right (blue team) using explicit kuramoto coupling. When (SCEME,DIRECTION) = ("adversarial cooperation",-1), the robot collective will move toward the left (red team) using implecit coupling without any explicit communication between robots.
+
+For a newer version (multisimtransport.py), you can set the following parameter within coppeliasim's child script.
+```
+PARAMS = {
+    "NPOSITIVE": 4,           # Number of positive team robots
+    "NNEGATIVE": 4,           # Number of negative team robots
+    "SCHEME": "adversarial_cooperation",  # "kuramoto" vs "adversarial_cooperation"
+    "DIRECTION": 1,           # Motion direction flag
+    "ETA": 500*1,               # Tegotae coupling gain
+    "OMEGA": 1,               # Natural frequency
+    "LOAD": 1,                # Load pre-trained models
+    "DATA_COLLECT": 0,        # Enable/disable data logging
+}
+```
 
 ## Contact
 
 Arthicha Srisuchinnawong (zumoarthicha@gmail.com)
+Atanu Chatterjee (atanu.chatterjee@colorado.edu)
