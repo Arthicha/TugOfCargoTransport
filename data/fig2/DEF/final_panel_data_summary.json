@@ -1,0 +1,25 @@
+{
+  "tau_exp_s": 2.389699,
+  "tau_sim_s": 3.217171730927471,
+  "sign_convention": {
+    "delta_omega": "omega_R-omega_L",
+    "delta_phi": "Phi_R-Phi_L",
+    "m_positive": "right/blue"
+  },
+  "confidence_interval_percent": 90.0,
+  "bootstrap_draws_retained": 2000,
+  "E_frequency_parameters": {
+    "0.5": {
+      "intercept": -0.04168126940434733,
+      "amplitude": -0.5335347537536408
+    },
+    "0.8": {
+      "intercept": 0.09243025269635802,
+      "amplitude": -0.5670477049194608
+    },
+    "1.0": {
+      "intercept": 0.048693389813649075,
+      "amplitude": -0.5102466383508545
+    }
+  }
+}

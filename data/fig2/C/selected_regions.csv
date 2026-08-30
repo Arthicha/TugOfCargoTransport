@@ -1,0 +1,4 @@
+region_key,region_order,marker,q_left,q_right,display_score
+left_dominant,1,s,0.35,0.85,-0.4559912611960079
+diagonal,2,D,0.6,0.6,0.0
+right_dominant,3,^,0.85,0.35,0.4559912611960079
