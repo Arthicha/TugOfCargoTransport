@@ -46,11 +46,11 @@ In phase 3 (Deployment): set SCHEME to "adversarial cooperation", DATA_COLLECT t
 
 ## Demo 3: Candy Experiment (Ant)
 
-![DEMO3](figures/demo3_candy.png)
+![DEMO3](figures/demo3_candy.PNG)
 
 ## Demo 4: Maze Experiment (Ant)
 
-![DEMO4](figures/demo4_maze.png)
+![DEMO4](figures/demo4_maze.PNG)
 
 ## Demo 5: Traffic (Motor Protein)
 
