@@ -71,9 +71,11 @@ To execute Python scripts directly within CoppeliaSim:
 | ![DEMO0](figures/demo0_tugofwar_1d_model.png) | 
 
 | Demo 1: Toward a Goal |
+| :---: |
 | ![DEMO1](figures/demo1_toward_a_goal.png) |
 
 | Demo 3: Candy (Ant) | 
+| :---: |
 | ![DEMO3](figures/demo3_candy.PNG) |
 
 | Demo 4: Maze (Ant) | Demo 5: Traffic (Motor Protein) |
