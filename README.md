@@ -78,10 +78,16 @@ To execute Python scripts directly within CoppeliaSim:
 | :---: |
 | ![DEMO3](figures/demo3_candy.PNG) |
 
-| Demo 4: Maze (Ant) | Demo 5: Traffic (Motor Protein) |
-| :---: | :---: |
-| ![DEMO4](figures/demo4_maze.PNG) | ![DEMO5](figures/demo5_protein.png) |
-
+<table>
+  <tr>
+    <th style="width: 50%; text-align: center;">Demo 4: Maze (Ant)</th>
+    <th style="width: 50%; text-align: center;">Demo 5: Traffic (Motor Protein)</th>
+  </tr>
+  <tr>
+    <td style="text-align: center;"><img src="figures/demo4_maze.PNG" alt="DEMO4"></td>
+    <td style="text-align: center;"><img src="figures/demo5_protein.png" alt="DEMO5"></td>
+  </tr>
+</table>
 ---
 
 ## Configuration Parameters
