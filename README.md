@@ -80,8 +80,8 @@ To execute Python scripts directly within CoppeliaSim:
 
 <table>
   <tr>
-    <th style="width: 50%; text-align: center;">Demo 4: Maze (Ant)</th>
-    <th style="width: 50%; text-align: center;">Demo 5: Traffic (Motor Protein)</th>
+    <th style="width: 70%; text-align: center;">Demo 4: Maze (Ant)</th>
+    <th style="width: 30%; text-align: center;">Demo 5: Traffic (Motor Protein)</th>
   </tr>
   <tr>
     <td style="text-align: center;"><img src="figures/demo4_maze.PNG" alt="DEMO4"></td>
