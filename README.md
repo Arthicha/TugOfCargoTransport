@@ -39,6 +39,9 @@ In phase 3 (Deployment): set SCHEME to "adversarial cooperation", DATA_COLLECT t
 
 ![Structure](figures/oversimplified_diagram.png)
 
+## Demo0: 1D Tug-of-War Model
+
+![DEMO0](figures/demo0_tugofwar_1d_model.png)
 
 ## Demo1: Toward a Goal
 
