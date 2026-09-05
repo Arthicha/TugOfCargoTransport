@@ -1,89 +1,116 @@
-# Tug of War: How Adversarial Robots Lead to Emergence Cooperation
+# Tug of War: How Adversarial Robots Lead to Emergent Cooperation
 
 ![TugOfRobots](figures/cargo_transport.png)
 
-## Requirements (tested platform)
+## Prerequisites & Requirements
 
-- Python 3.12
-- python standard modules (numpy, matplotlib, etc)
-- CoppeliaSim V4.4 [download](https://www.coppeliarobotics.com/)
+- **Python**: Version 3.12
+- **Python Libraries**: Standard scientific modules (`numpy`, `matplotlib`, etc.)
+- **CoppeliaSim**: Version V4.4 ([Download Here](https://www.coppeliarobotics.com/))
 
-## Setting Up
+---
 
-- To run a python script in CoppeliaSim, navigate to `%APPDATA%/CoppeliaSim` and add 
-`defaultPython = "<path to python>"`, e.g., "C:\Users\myuser\AppData\Local\Programs\Python\Python312\python.exe", to `usrset.txt`.
+## Setup Instructions
 
-## Running the Experiment Yourself
+To execute Python scripts directly within CoppeliaSim:
 
-1. Open Coppelia scene `tortel_cargoexp.ttt`
+1. Navigate to your CoppeliaSim AppData folder: `%APPDATA%/CoppeliaSim`
+2. Open or create `usrset.txt`.
+3. Add the `defaultPython` key pointing to your Python executable, for example:
+   ```txt
+   defaultPython = "C:\Users\myuser\AppData\Local\Programs\Python\Python312\python.exe"
+   ```
 
-2. In cargo's child scrpt, set EXTERNAL_FILE_PATH to "simtransport.py" or "multisimtransport.py". For example, "D:\myname\projectname\simtransport.py"
+---
 
-3. Run (>) in the CoppeliaSim. CoppeliaSim will automatically run simtransport.py for you.
+## Running the Simulation
 
-4. Enjoy!
+1. Open the CoppeliaSim scene: `tortel_cargoexp.ttt`
+2. Open the cargo's child script and set `EXTERNAL_FILE_PATH` to point to `simtransport.py` or `multisimtransport.py`:
+   ```python
+   EXTERNAL_FILE_PATH = "D:/myname/projectname/simtransport.py"
+   ```
+3. Click the **Run** button (`>`) in CoppeliaSim. The simulator will automatically execute the Python script.
 
-## Pipeline (AI-summary)
+---
+
+## Pipeline Overview
 
 ![Pipeline](figures/oversimplified_pipeline.png)
 
-In phase 1 (Data Collection): set SCHEME to "kuramoto" and DATA_COLLECT to "True". 
+* **Phase 1 (Data Collection)**: 
+  * Set `SCHEME = "kuramoto"`
+  * Set `DATA_COLLECT = True`
+* **Phase 2 (Pre-training)**: 
+  * Set `SCHEME = "adversarial cooperation"`
+  * Set `DATA_COLLECT = False`, `PLOT = True`, and `LOAD = False`
+  * Rename the output data file based on target direction:
+    * `bluewin_nofilter.csv` (when `DIRECTION = 1`)
+    * `redwin_nofilter.csv` (when `DIRECTION = -1`)
+  * Ensure the model fits the collected data properly before proceeding:
 
-In phase 2 (Pre-training): set SCHEME to "adversarial cooperation", DATA_COLLECT to "False", PLOT to "True", and LOAD to "False". Also, rename the data file to "bluewin_nofilter.csv" (DIRECTION = 1) or "redwin_nofilter.csv" (DIRECTION = -1). Make sure the model fit to the data well, as shown below:
+  ![goodfit](figures/rbf_training.png)
 
-![goodfit](figures/rbf_training.png)
+* **Phase 3 (Deployment)**: 
+  * Set `SCHEME = "adversarial cooperation"`
+  * Set `DATA_COLLECT = False`, `PLOT = True` or `False`, and `LOAD = True` (bypasses training)
+  * Tune the coupling/adaptation rate (`ETA`) as needed.
 
-In phase 3 (Deployment): set SCHEME to "adversarial cooperation", DATA_COLLECT to "False", PLOT to "True" or "False", and LOAD to "True" to bypass the training process. Here, you may need to tune the learning/adaptation/coupling rate ETA.
+---
 
-## Code Structure (AI-summary)
+## Architecture & Code Structure
 
 ![Structure](figures/oversimplified_diagram.png)
 
-## Demo0: 1D Tug-of-War Model
+---
 
-![DEMO0](figures/demo0_tugofwar_1d_model.png)
+## Demos & Experiments
 
-## Demo1: Toward a Goal
+| Demo 0: 1D Model | Demo 1: Toward a Goal |
+| :---: | :---: |
+| ![DEMO0](figures/demo0_tugofwar_1d_model.png) | ![DEMO1](figures/demo1_toward_a_goal.png) |
 
-![DEMO1](figures/demo1_toward_a_goal.png)
+| Demo 3: Candy (Ant) | Demo 4: Maze (Ant) | Demo 5: Traffic (Motor Protein) |
+| :---: | :---: | :---: |
+| ![DEMO3](figures/demo3_candy.PNG) | ![DEMO4](figures/demo4_maze.PNG) | ![DEMO5](figures/demo5_protein.png) |
 
-## Demo 3: Candy Experiment (Ant)
+---
 
-![DEMO3](figures/demo3_candy.PNG)
+## Configuration Parameters
 
-## Demo 4: Maze Experiment (Ant)
+### Standard Configuration (`simtransport.py`)
 
-![DEMO4](figures/demo4_maze.PNG)
+* `SCHEME`: Control approach. Choose between:
+  * `"kuramoto"`: Standard Kuramoto coupling enforcing phase offset.
+  * `"adversarial cooperation"`: Implicit coupling via force feedback.
+* `DIRECTION`: Target motion direction.
+  * `1`: Move toward the Blue team (right).
+  * `-1`: Move toward the Red team (left).
 
-## Demo 5: Traffic (Motor Protein)
+*Example*: Setting `("kuramoto", 1)` moves the collective right using explicit Kuramoto coupling. Setting `("adversarial cooperation", -1)` moves the collective left via implicit force-feedback coupling with no direct inter-robot communication.
 
-![DEMO5](figures/demo5_protein.png)
+---
 
-## Configure the Program
+### Advanced Multi-Agent Configuration (`multisimtransport.py`)
 
-In "simtransport.py", there are 2 configuration argument you can play. 
+Set these parameters inside the CoppeliaSim child script:
 
-<item> SCHEME: control scheme, either "kuramoto" (standart kuramoto coupling enforcing phase offset) vs "adversarial cooperation" (implecit coupling via force feedback).
-
-<item> DIRECTION: target moving direction. 1 toward the blue team, -1 toward the red team.
-
-For example, when (SCEME,DIRECTION) = ("kuramoto",1) the robot collective will moves toward the right (blue team) using explicit kuramoto coupling. When (SCEME,DIRECTION) = ("adversarial cooperation",-1), the robot collective will move toward the left (red team) using implecit coupling without any explicit communication between robots.
-
-For a newer version (multisimtransport.py), you can set the following parameter within coppeliasim's child script.
-```
+```python
 PARAMS = {
-    "NPOSITIVE": 4,           # Number of positive team robots
-    "NNEGATIVE": 4,           # Number of negative team robots
-    "SCHEME": "adversarial_cooperation",  # "kuramoto" vs "adversarial_cooperation"
-    "DIRECTION": 1,           # Motion direction flag
-    "ETA": 500*1,               # Tegotae coupling gain
-    "OMEGA": 1,               # Natural frequency
-    "LOAD": 1,                # Load pre-trained models
-    "DATA_COLLECT": 0,        # Enable/disable data logging
+    "NPOSITIVE": 4,                        # Number of positive team robots
+    "NNEGATIVE": 4,                        # Number of negative team robots
+    "SCHEME": "adversarial_cooperation",   # Options: "kuramoto" vs "adversarial_cooperation"
+    "DIRECTION": 1,                        # Motion direction flag (1: Blue, -1: Red)
+    "ETA": 500 * 1,                        # Tegotae coupling gain
+    "OMEGA": 1,                            # Natural frequency
+    "LOAD": 1,                             # 1: Load pre-trained models | 0: Train
+    "DATA_COLLECT": 0,                     # 1: Enable data logging | 0: Disable
 }
 ```
 
-## Contact
+---
 
-Arthicha Srisuchinnawong (zumoarthicha@gmail.com)
-Atanu Chatterjee (atanu.chatterjee@colorado.edu)
+## Contact & Contributors
+
+* **Arthicha Srisuchinnawong**: zumoarthicha@gmail.com
+* **Atanu Chatterjee**: atanu.chatterjee@colorado.edu
