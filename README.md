@@ -5,7 +5,7 @@
 ## Prerequisites & Requirements
 
 - **Python**: Version 3.12
-- **Python Libraries**: Standard scientific modules (`numpy`, `matplotlib`, etc.)
+- **Python Libraries**: Standard scientific modules (`numpy`, `matplotlib`, etc.) and interface modules (`zmq`, `cbor2`, etc.))
 - **CoppeliaSim**: Version V4.4 ([Download Here](https://www.coppeliarobotics.com/))
 
 ---
@@ -14,6 +14,7 @@
 
 To execute Python scripts directly within CoppeliaSim:
 
+0. Clone this repository and rename it as 'code'
 1. Navigate to your CoppeliaSim AppData folder: `%APPDATA%/CoppeliaSim`
 2. Open or create `usrset.txt`.
 3. Add the `defaultPython` key pointing to your Python executable, for example:
