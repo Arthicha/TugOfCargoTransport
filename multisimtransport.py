@@ -18,10 +18,12 @@ sys.path.append(FOLDER_PATH)
 from network.numpyrbf import RBFNetwork, load_model
 
 # Python handles for CoppeliaSim
+
+'''
 try:
-	import sim
+    import sim
 except ImportError:
-	pass
+    sim = require('sim')'''
 
 # ================================================================================
 # PARAMETERS & CONFIGURATION (DEFAULTS - OVERRIDDEN IF PASSED FROM RUNNER)
@@ -33,6 +35,8 @@ OMEGA = globals().get("OMEGA", 1)
 DATA_COLLECT = globals().get("DATA_COLLECT", 1)
 PLOT = globals().get("PLOT", 0)
 LOAD = globals().get("LOAD", 1)
+FBRAKE = globals().get("FBRAKE", 0.0)
+FOFFSET = globals().get("FOFFSET", 0.0)
 SNAPSHOT_DIR = os.path.join(os.path.dirname(__file__), "snapshot")
 
 # External Parameters for Team Sizes
@@ -129,6 +133,7 @@ def refresh_dynamic_parameters():
 
 	# python
 	
+	#phis = np.array([0.0,0.0,0.0,0.0])
 	phis = np.random.uniform(-np.pi / 2, np.pi, NUM_ROBOTS)
 	tegotae = np.zeros(NUM_ROBOTS)
 	tegotae_min = np.zeros(NUM_ROBOTS)
@@ -151,6 +156,8 @@ def sysCall_init():
 	global positive_gain, negative_gain, forward_models
 	global line_drawing_handle
 
+
+
 	refresh_dynamic_parameters()
 
 	# Motor and robot handles
@@ -162,10 +169,13 @@ def sysCall_init():
 		robots[name] = sim.getObject(f"/{name}")
 		rob_dummies[name] = sim.getObject(f"/{name}/robo")
 		car_dummies[name] = sim.getObject(f"/cargo_{i + 1}")
-
+	print("init")
 	cargo = sim.getObject(f"/cargo")
 	goal = sim.getObject(f"/goal")
-	#goallist = [sim.getObject(f"/subgoal{str(i)}") for i in range(1,15,1)]
+	try:
+		goallist = [sim.getObject(f"/subgoal{str(i)}") for i in range(1,15,1)]
+	except:
+		pass
 	goallist = goallist + [goal]
 
 	if SCHEME == "adversarial_cooperation":
@@ -186,13 +196,10 @@ def sysCall_init():
 
 		if PLOT:
 			plot_training_results(training_data)
-
-
-
 	
 
 	# Graph handles
-	graph_handle = sim.getObject("/Graph")
+	#graph_handle = sim.getObject("/Graph")
 	init_line_capsules(count=NUM_ROBOTS)
 
 	# python
@@ -203,8 +210,9 @@ def sysCall_init():
 	colors = [blue_color if i < NPOSITIVE else red_color for i in range(NUM_ROBOTS)]
 
 	for i in range(NUM_ROBOTS):
-		stream_id = sim.addGraphStream(graph_handle, f"T{i}", "Nm", 0, colors[i])
-		phi_stream_handles.append(int(stream_id))
+		#stream_id = sim.addGraphStream(graph_handle, f"T{i}", "Nm", 0, colors[i])
+		#phi_stream_handles.append(int(stream_id))
+		pass
 
 # ================================================================================
 # FUNCTION: sysCall_actuation
@@ -215,6 +223,9 @@ def sysCall_actuation():
 	global yaws, tegotae_windup, graph_handle, phi_stream_handles
 
 	dt = DT_TARGET
+	if goallist == []:
+		sysCall_init()
+
 	goalobj = goallist[goalstages]
 
 	# Step 0: Sensing
@@ -238,8 +249,8 @@ def sysCall_actuation():
 			update_robot_cargo_lines()
 
 			frame_idx = int(printi // 300)
-			if (printi != 0):
-				take_snapshot(camera_name="snapshot", filename=f"frame_{frame_idx}.png")
+			#if (printi != 0):
+			#	take_snapshot(camera_name="snapshot", filename=f"frame_{frame_idx}.png")
 			#clear_capsule()
 			print(distance_to_goal)
 
@@ -252,6 +263,8 @@ def sysCall_actuation():
 	elif SCHEME == "adversarial_cooperation":
 		tegotae = compute_decentralized_coupling(currents)
 	
+	#tegotae = np.random.normal(currents*0,0.2)
+	
 	# Step 3: Update phase angles & force
 	phis = (phis + dt * tegotae) % (2.0 * np.pi)
 	force = np.clip(np.sin(phis), 0.0, 1.0)
@@ -262,7 +275,16 @@ def sysCall_actuation():
 	right_forces = 2 * 0.5 * force * np.clip(1.0 - force * turning, -1, 1) 
 	
 	for idx, name in enumerate(NAMESPACES):
-		drive(name, float(left_forces[idx]), float(right_forces[idx]), turning=force[idx] * turning[idx])
+
+		if force[idx] > 0:
+			drive(name, float(left_forces[idx]), float(right_forces[idx]), 
+				turning=force[idx] * turning[idx],torque0=FOFFSET)
+		else:
+			drive(name, FBRAKE, FBRAKE, turning=0.0, torque0=FOFFSET)
+
+			lmotor, rmotor = motors[name]
+			sim.setJointTargetVelocity(lmotor, 0)
+			sim.setJointTargetVelocity(rmotor, 0)
 
 	# Step 5: Recording & Visualization
 	if DATA_COLLECT:
@@ -277,8 +299,8 @@ def sysCall_actuation():
 		])
 		record(data, skip=SKIP)
 
-	for i, stream_id in enumerate(phi_stream_handles):
-		sim.setGraphStreamValue(graph_handle, stream_id, force[i])
+	#for i, stream_id in enumerate(phi_stream_handles):
+	#	sim.setGraphStreamValue(graph_handle, stream_id, force[i])
 
 	ti += 1.0 / TARGET_HZ
 	printi += 1.0
@@ -292,27 +314,28 @@ def compute_centralized_coupling():
 
 def compute_decentralized_coupling(currents):
 	global tegotae_windup
+	global tegotae_max
 
 	tegotae_raw = np.zeros(NUM_ROBOTS)
 	for i in range(NUM_ROBOTS):
 		adjusted_current = np.clip(currents[i], 0, None)
 
-		for j, gamma in zip([i], [1]):
-			grad_phi_fine = forward_models[j].backward_phi(phis[i], adjusted_current)
-			grad_phi_fine[grad_phi_fine > 0] *= 0.003 / positive_gain[j]
-			grad_phi_fine[grad_phi_fine < 0] *= 0.003 / negative_gain[j]
-			
-			tegotae_max[i] = 0.995 * tegotae_max[i] + 0.005 * grad_phi_fine
-			grad_phi_fine -= 0.2 * tegotae_max[i]
+		grad_phi_fine = forward_models[i].backward_phi(phis[i], adjusted_current)
+		grad_phi_fine[grad_phi_fine > 0] *= 0.003 / positive_gain[i]
+		grad_phi_fine[grad_phi_fine < 0] *= 0.003 / negative_gain[i]
+		
+		# only for force estimated
+		tegotae_max[i] = 0.995 * tegotae_max[i] + 0.005 * grad_phi_fine[0] 
+		grad_phi_fine -= 0.2 * tegotae_max[i]
 
-			grad_phi = gamma * grad_phi_fine
-			tegotae_raw[i] += grad_phi
+		grad_phi = 1 * grad_phi_fine
+		tegotae_raw[i] += grad_phi[0]
 
 	if ti < 15:
 		tegotae_raw *= 0.0
 
 	raw_drive = ETA * tegotae_raw
-	total_drive = raw_drive + tegotae_windup
+	total_drive = raw_drive + tegotae_windup 
 	tegotae_clipped = np.clip(total_drive, -TEGOTAE_CLIP, TEGOTAE_CLIP)
 	
 	tegotae_windup += (raw_drive - tegotae_clipped)
@@ -347,19 +370,21 @@ def compute_turning(goal_pose, robot_poses, yaws, robot_dyaws, force, offset=Tru
 	yaws_arr = np.array(yaws)
 	
 	if offset:
-		side_signs = np.array(np.zeros(NPOSITIVE+NNEGATIVE,))
-		#side_signs = np.array([1,-1,1,-1])
+		#side_signs = np.array(np.zeros(NPOSITIVE+NNEGATIVE,))
+		side_signs = np.array([1,-1,-1,1])
 		robotwise_goal = compute_tangent_points(goal_pose[:-1], robot_poses, side_signs)
 	else:
 		robotwise_goal = np.expand_dims(goal_pose[:-1], axis=0)
 
 	distance_to_goal = robotwise_goal - robot_poses
-	theta = 0*np.arctan2(distance_to_goal[:, 1], distance_to_goal[:, 0])
+	theta = np.arctan2(distance_to_goal[:, 1], distance_to_goal[:, 0])
 
+	
 	if DIRECTION > 0:
 		theta[NPOSITIVE:] += np.pi
 	elif DIRECTION < 0:
 		theta[:NPOSITIVE] += np.pi
+	
 
 	turning = np.sin(theta) * np.cos(yaws_arr) - np.cos(theta) * np.sin(yaws_arr)
 	turning = -TURNING_GAINS * np.clip(np.sin(turning) * 3, -1, 1)
@@ -462,20 +487,32 @@ def plot_training_results(training_data):
 	plt.tight_layout()
 	plt.show()
 
-def drive(name, left_forces, right_forces, turning=0):
+
+
+def drive(name, left_forces, right_forces, turning=0, torque0 = 0.0,direction=1):
 	global motors
 
 	lmotor, rmotor = motors[name]
 
-	sim.setJointTargetForce(lmotor, left_forces)
-	sim.setJointTargetForce(rmotor, right_forces)
+	vel = (sim.getJointVelocity(lmotor) + sim.getJointVelocity(rmotor)) /2
+	force = (left_forces + right_forces)/2.0
+	damping_gain = 2
 
-	turninggain = 0.5
-	vl = 1 + np.clip(2 * turninggain * turning, -2, 2)
-	vr = 1 + np.clip(-2 * turninggain * turning, -2, 2)
+	if 1:#(np.abs(force) > 0):
+		sim.setJointTargetForce(lmotor, torque0+np.clip(left_forces - 0*damping_gain * np.abs(vel),0,None) )
+		sim.setJointTargetForce(rmotor, torque0+np.clip(right_forces - 0*damping_gain * np.abs(vel),0,None) )
 
-	sim.setJointTargetVelocity(lmotor, 2 * vl)
-	sim.setJointTargetVelocity(rmotor, 2 * vr)
+		turninggain = 0.5
+		vl = 1 + np.clip(2 * turninggain * turning, -2, 2)
+		vr = 1 + np.clip(-2 * turninggain * turning, -2, 2)
+
+		sim.setJointTargetVelocity(lmotor, 2 * vl * direction)
+		sim.setJointTargetVelocity(rmotor, 2 * vr * direction)
+	'''else:
+		sim.setJointTargetForce(lmotor, np.abs(damping_gain*vel) + torque0)
+		sim.setJointTargetForce(rmotor, np.abs(damping_gain*vel)+ torque0)
+		sim.setJointTargetVelocity(lmotor, 0)
+		sim.setJointTargetVelocity(rmotor, 0)'''
 
 def get_estForce():
 	global NAMESPACES, rob_dummies, car_dummies

@@ -116,14 +116,16 @@ Set these parameters inside the CoppeliaSim child script:
 
 ```python
 PARAMS = {
-    "NPOSITIVE": 4,                        # Number of positive team robots
-    "NNEGATIVE": 4,                        # Number of negative team robots
+    "NPOSITIVE": 2,                        # Number of positive team robots
+    "NNEGATIVE": 2,                        # Number of negative team robots
     "SCHEME": "adversarial_cooperation",   # Options: "kuramoto" vs "adversarial_cooperation"
     "DIRECTION": 1,                        # Motion direction flag (1: Blue, -1: Red)
     "ETA": 500 * 1,                        # Tegotae coupling gain
     "OMEGA": 1,                            # Natural frequency
     "LOAD": 1,                             # 1: Load pre-trained models | 0: Train
     "DATA_COLLECT": 0,                     # 1: Enable data logging | 0: Disable
+    "FBRAKE": 0.8,                         # Braking force
+    "FOFFSET": 0.2,                        # Offset force
 }
 ```
 
