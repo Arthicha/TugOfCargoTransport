@@ -24,14 +24,41 @@ To execute Python scripts directly within CoppeliaSim:
 
 ---
 
-## Running the Simulation
+## Running the 1D Simulation
 
-1. Open the CoppeliaSim scene: `tortel_cargoexp.ttt`
+
+To run the 1D tug-of-war simulation:
+
+
+1. **Run the 1D Model:**
+
+   Execute the following command in your terminal:
+
+   ```
+
+   python 1d_model.py
+
+   ```
+
+2. **Run the CoppeliaSim Scene:**
+
+   * Open CoppeliaSim and load the scene file: `simulation/demo0_tug_of_war.ttt`
+
+   * Start the robot tug-of-war simulation by running the runner script in your terminal:
+
+     ```
+     python 1d_simtransport_runner.py
+     ```
+
+## Running the 2D Simulation
+
+1. Open the CoppeliaSim scene: `simulation/<name>.ttt`
 2. Open the cargo's child script and set `EXTERNAL_FILE_PATH` to point to `simtransport.py` or `multisimtransport.py`:
    ```python
    EXTERNAL_FILE_PATH = "D:/myname/projectname/simtransport.py"
    ```
 3. Click the **Run** button (`>`) in CoppeliaSim. The simulator will automatically execute the Python script.
+
 
 ---
 
