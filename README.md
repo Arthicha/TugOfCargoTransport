@@ -1,4 +1,4 @@
-# Tug of War: How Adversarial Robots Lead to Emergent Cooperation
+# Embodied timing turns a robotic tug-of-war into cooperative transport
 
 ![TugOfRobots](figures/cargo_transport.png)
 
